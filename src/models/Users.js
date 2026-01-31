@@ -17,6 +17,22 @@ const userSchema = new Schema(
       required: [true, "Email is required"],
       unique: true,
     },
+    refreshTokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        expiresAt: {
+          type: Date,
+          required: true,
+        },
+      },
+    ],
     todos: [{ type: Schema.Types.ObjectId, ref: "todos" }],
   },
 

@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/config.js");
-const UserModel = require("../models/Users.js");
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization;
@@ -16,4 +15,46 @@ const auth = (req, res, next) => {
   }
 };
 
-module.exports = auth;
+const { verifyAccessToken } = require("../utils/generateToken.js");
+const UserModel = require("../models/Users.js");
+
+const protect = async (req, res, next) => {
+  try {
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized, no token provided",
+      });
+    }
+
+    const decoded = verifyAccessToken(token);
+    const user = await UserModel.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    req.userId = user._id;
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized, token failed",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { auth, protect };

@@ -5,8 +5,10 @@ const connectDB = require("./src/config/db.js");
 const { PORT } = require("./src/config/config.js");
 const todoRouter = require("./src/routes/todoRoutes.js");
 const userRouter = require("./src/routes/userRoutes.js");
+const authRouter = require("./src/routes/authRoutes.js");
 
 app.use(express.json());
+
 const loggerFunction = (req, res, next) => {
   console.log(`Method: ${req.method}, URL: ${req.url} `);
   next();
@@ -14,6 +16,7 @@ const loggerFunction = (req, res, next) => {
 app.use((req, res, next) => loggerFunction(req, res, next));
 app.use("/api/todos", todoRouter);
 app.use("/api/users", userRouter);
+app.use("/api/auth", authRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

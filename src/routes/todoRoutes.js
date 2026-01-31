@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const auth = require("../middlewares/auth.js");
+const { protect } = require("../middlewares/auth.js");
 const todoRouter = express.Router();
 const {
   addTodo,
@@ -19,7 +19,7 @@ todoRouter.post(
   body("description")
     .isLength({ max: 200 })
     .withMessage("Description should be of maximum 200 characters"),
-  auth,
+  protect,
   addTodo,
 );
 
@@ -28,10 +28,10 @@ todoRouter.post(
 //   next();
 // };
 // todoRouter.use((req, res, next) => loggerFunction(req, res, next));
-todoRouter.get("/", auth, getTodos);
-todoRouter.get("/:id", auth, getTodoById);
-todoRouter.put("/:id", auth, updateTodo);
-todoRouter.put("/:id/completed", auth, toggleTodoCompletion);
-todoRouter.delete("/:id", auth, deleteTodo);
+todoRouter.get("/", protect, getTodos);
+todoRouter.get("/:id", protect, getTodoById);
+todoRouter.put("/:id", protect, updateTodo);
+todoRouter.put("/:id/completed", protect, toggleTodoCompletion);
+todoRouter.delete("/:id", protect, deleteTodo);
 
 module.exports = todoRouter;
