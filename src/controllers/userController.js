@@ -72,7 +72,6 @@ const getProfile = async (req, res) => {
   //   return;
   // } // we dont need this as we have an auth middleware
 
-  console.log(JSON.stringify(req.oidc.user));
   res.json({
     Name: user.name,
     Email: user.email,

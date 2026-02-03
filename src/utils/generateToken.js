@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
+
 require("dotenv").config();
 
 const generateAccessToken = (userId) => {
@@ -37,6 +37,7 @@ const verifyRefreshToken = (token) => {
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
+
   verifyRefreshToken,
   verifyAccessToken,
 };

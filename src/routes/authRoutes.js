@@ -7,12 +7,16 @@ const {
   refreshToken,
   logout,
   logoutAll,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController.js");
 
 const {
   registerValidator,
   loginValidator,
   refreshTokenValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
 } = require("../validators/authValidator");
 
 authRouter.post("/register", registerValidator, register);
@@ -21,4 +25,7 @@ authRouter.post("/refresh", refreshTokenValidator, refreshToken);
 
 authRouter.post("/logout", protect, logout);
 authRouter.post("/logout-all", protect, logoutAll);
+
+router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
+router.put("/reset-password/:token", resetPasswordValidator, resetPassword);
 module.exports = authRouter;

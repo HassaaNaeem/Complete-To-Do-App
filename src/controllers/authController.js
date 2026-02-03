@@ -1,5 +1,6 @@
 const UserModel = require("../models/Users.js");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const {
   generateAccessToken,
@@ -187,8 +188,6 @@ const logout = async (req, res) => {
     }
 
     const userId = req.userId;
-    // console.log("userId: " + userId);
-    // console.log("req.userId: " + req.userId);
     const user = await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -241,10 +240,109 @@ const logoutAll = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(401).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
+    const user = await UserModel.findOne({ email: email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User with this email doesn't exists",
+      });
+    }
+    const resetUrl = `${req.protocol}://${req.get("host")}/api/auth/reset-password/${resetToken}`;
+    console.log("Reset Url" + resetUrl);
+
+    const resetToken = user.generatePasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+  } catch (error) {
+    console.log("Forgot password error: " + error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process password reset request",
+      error: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(401).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await UserModel.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    }).select("+resetPasswordToken +resetPasswordExpire");
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    user.password = password;
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshTokens.push({
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    // setAccessTokenCookie(res, accessToken);
+    // setRefreshTokenCookie(res, refreshToken);
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful",
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reset password",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   refreshToken,
   logout,
   logoutAll,
+  forgotPassword,
+  resetPassword,
 };
