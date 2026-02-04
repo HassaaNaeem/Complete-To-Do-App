@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 require("dotenv").config();
 
@@ -34,10 +35,15 @@ const verifyRefreshToken = (token) => {
   }
 };
 
+const generatePasswordResetToken = () => {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  return resetToken;
+};
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
-
+  generatePasswordResetToken,
   verifyRefreshToken,
   verifyAccessToken,
 };

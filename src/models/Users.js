@@ -37,14 +37,9 @@ const userSchema = new Schema(
 
     todos: [{ type: Schema.Types.ObjectId, ref: "todos" }],
 
-    resetPasswordToken: {
-      type: String,
-      select: false,
-    },
-
+    resetPasswordToken: String,
     resetPasswordExpire: {
       type: Date,
-      select: false,
     },
   },
 
@@ -53,16 +48,16 @@ const userSchema = new Schema(
   },
 );
 
-userSchema.methods.generatePasswordResetToken = () => {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  this.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+// userSchema.methods.generatePasswordResetToken = () => {
+//   const resetToken = crypto.randomBytes(32).toString("hex");
+//   this.resetPasswordToken = crypto
+//     .createHash("sha256")
+//     .update(resetToken)
+//     .digest("hex");
 
-  this.resetPasswordExpire = Date.now() * 10 * 60 * 1000; //  10 minutes
-  return resetToken;
-};
+//   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; //  10 minutes
+//   return resetToken;
+// };
 
 const UserModel = mongoose.model("users", userSchema);
 

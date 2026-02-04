@@ -5,6 +5,7 @@ const { validationResult } = require("express-validator");
 const {
   generateAccessToken,
   generateRefreshToken,
+  generatePasswordResetToken,
 } = require("../utils/generateToken.js");
 
 const register = async (req, res) => {
@@ -258,11 +259,24 @@ const forgotPassword = async (req, res) => {
         message: "User with this email doesn't exists",
       });
     }
-    const resetUrl = `${req.protocol}://${req.get("host")}/api/auth/reset-password/${resetToken}`;
-    console.log("Reset Url" + resetUrl);
+    const resetToken = generatePasswordResetToken();
 
-    const resetToken = user.generatePasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    const resetUrl = `${req.protocol}://${req.get("host")}/api/auth/reset-password/${resetToken}`;
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset sent in console",
+      resetUrl: resetUrl,
+    });
   } catch (error) {
     console.log("Forgot password error: " + error);
     return res.status(500).json({
@@ -279,18 +293,20 @@ const resetPassword = async (req, res) => {
     const { password } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
         errors: errors.array(),
       });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    // console.log("Hashed Token: " + hashedToken);
 
     const user = await UserModel.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpire: { $gt: Date.now() },
-    }).select("+resetPasswordToken +resetPasswordExpire");
+    });
+    // console.log(user);
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -298,7 +314,8 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    user.password = password;
+    const hashedPassword = await bcrypt.hash(password, 3);
+    user.password = hashedPassword;
 
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;

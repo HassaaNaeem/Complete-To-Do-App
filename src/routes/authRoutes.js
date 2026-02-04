@@ -26,6 +26,6 @@ authRouter.post("/refresh", refreshTokenValidator, refreshToken);
 authRouter.post("/logout", protect, logout);
 authRouter.post("/logout-all", protect, logoutAll);
 
-router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
-router.put("/reset-password/:token", resetPasswordValidator, resetPassword);
+authRouter.post("/forgot-password", forgotPasswordValidator, forgotPassword);
+authRouter.put("/reset-password/:token", resetPasswordValidator, resetPassword);
 module.exports = authRouter;
